@@ -19,13 +19,17 @@ class Point {
         this.position.y += this.direction.y * this.velocity * deltaTime;
     }
 
-    draw(ctx) {
-        const radius = 2;
+    draw(ctx, color) {
+        const radius = 1.5;
 
         ctx.save();
         
         ctx.translate(this.position.x, this.position.y);
-        ctx.fillStyle = 'transparent';
+        if (color) {
+            ctx.fillStyle = color;
+        } else {
+            ctx.fillStyle = 'transparent';
+        }
         ctx.beginPath();
         ctx.arc(0, 0, radius, 0, 2 * Math.PI);
         ctx.closePath();
