@@ -44,7 +44,7 @@ class CanvasComponent {
     }
 
     _start() {
-        let interval = 200;
+        let interval = 250;
         for (let i = 1; i <= 6; i++) {
             setTimeout(() => {
                 this.components[`CircleInception${i}`].animateIn();

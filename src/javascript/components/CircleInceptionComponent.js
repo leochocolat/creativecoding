@@ -23,8 +23,9 @@ class CircleInception {
             y: this._props.y,
         }
 
-        let radiusArray = [100/2, 100/3, 100/4, 100/5, 100/6, 100/7];
-        let speedFactorArray = [1, 2, 3, 4, 5, 6];
+        // let radiusArray = [100/2, 100/3, 100/4, 100/5, 100/6, 100/7];
+        let radiusArray = [100/3, 100/4, 100/5, 100/6, 100/7, 100/8];
+        let speedFactorArray = [2, 3, 4, 5, 6, 7];
 
         this._settings = {
             clearOpacity: 1,
