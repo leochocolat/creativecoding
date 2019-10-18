@@ -22,14 +22,18 @@ class CircleInception {
             y: this._props.y,
         }
 
+        let radiusArray = [100/2, 100/3, 100/4, 100/5, 100/6, 100/7];
+        let speedFactorArray = [1, 2, 3, 4, 5, 6];
+
         this._settings = {
-            clearOpacity: 0.01,
+            clearOpacity: 1,
             radius: (this._width / 2) - 60,
-            speed: 0.1,
-            rotationSpeedFactor: 50,
-            radiusProportion: 70 * ((1 + id)/6)
+            speed: 0.8,
+            //102 interessant
+            rotationSpeedFactor: speedFactorArray[id],
+            radiusProportion: radiusArray[id],
+            dephasingFactor: 1
         }
-        
         this._delta = 0;
 
         this._setup();
@@ -48,7 +52,7 @@ class CircleInception {
     }
 
     _setupRotatingCircle() {
-        this._rotatingCircleRadius = this._settings.radius * (this._settings.radiusProportion/100);
+        this._rotatingCircleRadius = this._settings.radius * (this._settings.radiusProportion/100) * this._settings.dephasingFactor;
         let center = {};
         center.x = this._width/2 + Math.cos(0) * (this._settings.radius - this._rotatingCircleRadius);
         center.y = this._height/2 + Math.sin(0) * (this._settings.radius - this._rotatingCircleRadius);
@@ -66,39 +70,46 @@ class CircleInception {
     _setupRotatingCircleTangentPoint() {
         let radius = this._rotatingCircleRadius;
         let center = {};
-        center.x = this._rotatingCircleCenter.position.x + Math.cos(-this._delta/100) * radius;
-        center.y = this._rotatingCircleCenter.position.y + Math.sin(-this._delta/100) * radius;
+        center.x = this._rotatingCircleCenter.position.x + Math.cos(-this._delta * this._settings.rotationSpeedFactor) * radius;
+        center.y = this._rotatingCircleCenter.position.y + Math.sin(-this._delta * this._settings.rotationSpeedFactor) * radius;
         this._rotatingCircleTangentPoint = new Point(center);
     }
 
-
     //UPDATE
+    _updateCircleContainer() {
+        
+    }
+
     _updateRotatingCircle() {
         let radius = this._rotatingCircleRadius;
-        this._rotatingCircle.position.x = this._width/2 + Math.cos(- this._delta/100) * (this._settings.radius - radius);
-        this._rotatingCircle.position.y = this._height/2 + Math.sin(- this._delta/100) * (this._settings.radius - radius);
+        this._rotatingCircle.position.x = this._width/2 + Math.cos(-this._delta) * (this._settings.radius - radius);
+        this._rotatingCircle.position.y = this._height/2 + Math.sin(-this._delta) * (this._settings.radius - radius);
     }
 
     _updateRotatingCircleCenter() {
         let radius = this._rotatingCircleRadius;
-        this._rotatingCircleCenter.position.x = this._width/2 + Math.cos(- this._delta/100) * (this._settings.radius - radius);
-        this._rotatingCircleCenter.position.y = this._height/2 + Math.sin(- this._delta/100) * (this._settings.radius - radius);
+        this._rotatingCircleCenter.position.x = this._width/2 + Math.cos(- this._delta) * (this._settings.radius - radius);
+        this._rotatingCircleCenter.position.y = this._height/2 + Math.sin(- this._delta) * (this._settings.radius - radius);
     }
     
     _updateRotatingCircleTangentPoint() {
         let radius = this._rotatingCircleRadius;
-        this._rotatingCircleTangentPoint.position.x = this._rotatingCircleCenter.position.x + Math.cos(this._delta/this._settings.rotationSpeedFactor) * radius;
-        this._rotatingCircleTangentPoint.position.y = this._rotatingCircleCenter.position.y + Math.sin(this._delta/this._settings.rotationSpeedFactor) * radius;
+        this._rotatingCircleTangentPoint.position.x = this._rotatingCircleCenter.position.x + Math.cos(this._delta * this._settings.rotationSpeedFactor) * radius;
+        this._rotatingCircleTangentPoint.position.y = this._rotatingCircleCenter.position.y + Math.sin(this._delta * this._settings.rotationSpeedFactor) * radius;
     }
 
     //PUBLIC UPDATE
     updateSettings(props, value) {
         this._settings[props] = value;
+        if (props == 'dephasingFactor') {
+            this._clear(1);
+            this._setupRotatingCircle();
+        }
     }
 
     //DRAW
     _drawCircleContainer() {
-        this._circleContainer.draw(this._ctx, 'rgba(255, 255, 255, 0.5)');
+        this._circleContainer.draw(this._ctx, 'rgba(255, 255, 255, 0.2)');
     }
 
     _drawRotatingCircle() {
@@ -119,7 +130,7 @@ class CircleInception {
     }
 
     draw(deltaTime) {
-        this._delta += this._settings.speed * deltaTime;
+        this._delta += this._settings.speed * 0.001 * deltaTime;
 
         this._clear(this._settings.clearOpacity);
 
@@ -132,6 +143,7 @@ class CircleInception {
         this._drawRotatingCircleCenter();
         this._drawRotatingCircleTangentPoint();
 
+        this._updateCircleContainer();
         this._updateRotatingCircle();
         this._updateRotatingCircleCenter();
         this._updateRotatingCircleTangentPoint();

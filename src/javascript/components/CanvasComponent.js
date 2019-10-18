@@ -34,6 +34,12 @@ class CanvasComponent {
         this._setupGUI();
         this._setupDeltaTime();
         this._setupEventListeners();
+
+        setTimeout(() => {
+            TweenLite.to(this._guiSettings, 1, { clearOpacity: 0.01, onUpdate: () => {
+                this._settingsUpdateHandler('clearOpacity', this._guiSettings.clearOpacity);
+            }});
+        }, 6000);
     }
 
     _setupCanvas() {
@@ -72,20 +78,25 @@ class CanvasComponent {
 
     _setupGUI() {
         this._guiSettings = {
-            clearOpacity: 0.01,
-            speed: 0.1,
+            clearOpacity: 1,
+            speed: 1,
             rotationSpeedFactor: 50,
+            dephasingFactor: 1
         }
 
         const gui = new dat.GUI();
 
         gui.add(this._guiSettings, 'clearOpacity', [0.01, 1])
             .onChange(() => { this._settingsUpdateHandler('clearOpacity') });
-        gui.add(this._guiSettings, 'speed', 0, 5)
+        gui.add(this._guiSettings, 'speed', 0, 10)
             .onChange(() => { this._settingsUpdateHandler('speed') })
-            .step(0.001);
+            .step(0.1);
         gui.add(this._guiSettings, 'rotationSpeedFactor', 0, 500)
+            .step(0.1)
             .onChange(() => { this._settingsUpdateHandler('rotationSpeedFactor') });
+        gui.add(this._guiSettings, 'dephasingFactor', 0, 2)
+            .step(0.00001)
+            .onChange(() => { this._settingsUpdateHandler('dephasingFactor') });
     }
 
     _setupComponents() {
