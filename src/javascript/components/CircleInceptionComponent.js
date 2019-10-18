@@ -4,6 +4,7 @@ import Circle from '../modules/Circle';
 import SimplexNoise from 'simplex-noise';
 import * as dat from 'dat.gui';
 import _ from 'underscore';
+import { TweenLite } from 'gsap';
 
 
 class CircleInception {
@@ -44,6 +45,7 @@ class CircleInception {
         this._setupRotatingCircle();
         this._setupRotatingCircleCenter();
         this._setupRotatingCircleTangentPoint();
+        this._setupRotatingCircleTangentOpositePoint();
     }
 
     //SETUP
@@ -75,6 +77,14 @@ class CircleInception {
         this._rotatingCircleTangentPoint = new Point(center);
     }
 
+    _setupRotatingCircleTangentOpositePoint() {
+        let radius = this._rotatingCircleRadius;
+        let center = {};
+        center.x = this._rotatingCircleCenter.position.x + Math.cos((-this._delta * this._settings.rotationSpeedFactor) + Math.PI * 2 ) * radius;
+        center.y = this._rotatingCircleCenter.position.y + Math.sin((-this._delta * this._settings.rotationSpeedFactor) + Math.PI * 2 ) * radius;
+        this._rotatingCircleTangentOpositePoint = new Point(center);
+    }
+
     //UPDATE
     _updateCircleContainer() {
         
@@ -98,13 +108,26 @@ class CircleInception {
         this._rotatingCircleTangentPoint.position.y = this._rotatingCircleCenter.position.y + Math.sin(this._delta * this._settings.rotationSpeedFactor) * radius;
     }
 
+    _updateRotatingCircleTangentOpositePoint() {
+        let radius = this._rotatingCircleRadius;
+        this._rotatingCircleTangentOpositePoint.x = this._rotatingCircleCenter.position.x + Math.cos((-this._delta * this._settings.rotationSpeedFactor) + Math.PI * 2 ) * radius;
+        this._rotatingCircleTangentOpositePoint.y = this._rotatingCircleCenter.position.y + Math.sin((-this._delta * this._settings.rotationSpeedFactor) + Math.PI * 2 ) * radius;
+    }
+
     //PUBLIC UPDATE
     updateSettings(props, value) {
         this._settings[props] = value;
         if (props == 'dephasingFactor') {
-            this._clear(1);
+            // this._clear(1);
             this._setupRotatingCircle();
         }
+    }
+
+    animateIn() {
+        let tweenValue = { opacity: 0 }
+        TweenLite.to(tweenValue, .5, { opacity: 1, onUpdate: () => {
+            this._circleContainer.animate(tweenValue.opacity)
+        }});
     }
 
     //DRAW
@@ -122,6 +145,10 @@ class CircleInception {
 
     _drawRotatingCircleTangentPoint() {
         this._rotatingCircleTangentPoint.draw(this._ctx, 'white');
+    }
+    
+    _drawRotatingCircleTangentOpositePoint() {
+        this._rotatingCircleTangentOpositePoint.draw(this._ctx, 'white');
     }
 
     _clear(opacity) {
@@ -142,11 +169,13 @@ class CircleInception {
         // this._drawRotatingCircle();
         this._drawRotatingCircleCenter();
         this._drawRotatingCircleTangentPoint();
+        // this._drawRotatingCircleTangentOpositePoint();
 
         this._updateCircleContainer();
         this._updateRotatingCircle();
         this._updateRotatingCircleCenter();
         this._updateRotatingCircleTangentPoint();
+        this._updateRotatingCircleTangentOpositePoint();
 
         this._ctx.restore();
     }

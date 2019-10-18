@@ -1,6 +1,8 @@
 import _ from 'underscore';
 import { TweenLite, Quint } from 'gsap';
 import * as dat from 'dat.gui';
+import SoundManager from './SoundManager';
+import Modulo from '../utils/Modulo';
 
 //components
 import NoiseCircleComponent from './NoiseCircleComponent';
@@ -13,7 +15,9 @@ class CanvasComponent {
             '_tickHandler',
             '_resizeHandler',
             '_mousemoveHandler',
-            '_settingsUpdateHandler'
+            '_settingsUpdateHandler',
+            '_mousedownHandler',
+            '_mouseupHandler'
         );
 
         this.components = {};
@@ -33,13 +37,25 @@ class CanvasComponent {
         this._setupComponents();
         this._setupGUI();
         this._setupDeltaTime();
-        this._setupEventListeners();
-
+        // this._setupEventListeners();
         setTimeout(() => {
-            TweenLite.to(this._guiSettings, 1, { clearOpacity: 0.01, onUpdate: () => {
+            this._start();
+        }, 2000);
+    }
+
+    _start() {
+        let interval = 200;
+        for (let i = 1; i <= 6; i++) {
+            setTimeout(() => {
+                this.components[`CircleInception${i}`].animateIn();
+            }, i * interval)
+        }
+        setTimeout(() => {
+            TweenLite.to(this._guiSettings, 1, { clearOpacity: 0.02, onUpdate: () => {
                 this._settingsUpdateHandler('clearOpacity', this._guiSettings.clearOpacity);
             }});
-        }, 6000);
+        }, 8500);
+        this._setupEventListeners();
     }
 
     _setupCanvas() {
@@ -79,12 +95,14 @@ class CanvasComponent {
     _setupGUI() {
         this._guiSettings = {
             clearOpacity: 1,
-            speed: 1,
+            speed: 0.8,
             rotationSpeedFactor: 50,
             dephasingFactor: 1
         }
 
-        const gui = new dat.GUI();
+        this._speedAnim = this._guiSettings.dephasingFactor;
+
+        const gui = new dat.GUI({ closed: true });
 
         gui.add(this._guiSettings, 'clearOpacity', [0.01, 1])
             .onChange(() => { this._settingsUpdateHandler('clearOpacity') });
@@ -101,6 +119,7 @@ class CanvasComponent {
 
     _setupComponents() {
         // this.components.NoiseCircle = new NoiseCircleComponent(0, this._boxes[0], this._ctx);
+        this.SoundManager = new SoundManager();
         this.components.CircleInception1 = new CircleInceptionComponent(0, this._boxes[0], this._ctx);
         this.components.CircleInception2 = new CircleInceptionComponent(1, this._boxes[1], this._ctx);
         this.components.CircleInception3 = new CircleInceptionComponent(2, this._boxes[2], this._ctx);
@@ -125,12 +144,19 @@ class CanvasComponent {
         this.components.CircleInception5.draw(this._deltaTime);
         this.components.CircleInception6.draw(this._deltaTime);
 
+        if(!this._speedAnimationStarted) return;
+        this._speedAnim += 0.01;
+        this._guiSettings.dephasingFactor = Modulo(this._speedAnim, 2);
+        this._settingsUpdateHandler('dephasingFactor', this._guiSettings.dephasingFactor);
+
     }
 
     _setupEventListeners() {
         TweenLite.ticker.addEventListener('tick', this._tickHandler);
         window.addEventListener('resize', this._resizeHandler);
         this._canvas.addEventListener('mousemove', this._mousemoveHandler);
+        this._canvas.addEventListener('mousedown', this._mousedownHandler);
+        this._canvas.addEventListener('mouseup', this._mouseupHandler);
     }
 
     _tickHandler() {
@@ -167,7 +193,22 @@ class CanvasComponent {
         this.components.CircleInception6.updateSettings(props, this._guiSettings[props]);
     }
 
+    _mousedownHandler() {
+        this._speedAnimationStarted = true;
+        TweenLite.to(this._guiSettings, 2, { speed: 0.8 * 0.2, onUpdate: () => {
+            this._settingsUpdateHandler('speed', this._guiSettings.speed);
+        }
+    });
+    this.SoundManager.slowDown();
+}
 
+_mouseupHandler() {
+    this._speedAnimationStarted = false;
+    TweenLite.to(this._guiSettings, 2, { speed: 0.8 * 1, onUpdate: () => {
+        this._settingsUpdateHandler('speed', this._guiSettings.speed)
+    }});
+    this.SoundManager.resetSpeed();
+    }
 }
 
 export default CanvasComponent;
