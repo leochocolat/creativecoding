@@ -18,7 +18,7 @@ class SoundManager {
         let request = new XMLHttpRequest();
         
         //48bpm
-        request.open("GET", "../../assets/sounds/shanghai.mp3", true);
+        request.open("GET", "../../shanghai.mp3", true);
         request.responseType = "arraybuffer";
         request.onload = () => {
             this._audioContext.decodeAudioData(request.response, this._onAudioReadyHandler);
