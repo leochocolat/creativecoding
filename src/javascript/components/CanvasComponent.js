@@ -37,7 +37,6 @@ class CanvasComponent {
         this._setupComponents();
         this._setupGUI();
         this._setupDeltaTime();
-        // this._setupEventListeners();
         setTimeout(() => {
             this._start();
         }, 2000);
@@ -155,8 +154,10 @@ class CanvasComponent {
         TweenLite.ticker.addEventListener('tick', this._tickHandler);
         window.addEventListener('resize', this._resizeHandler);
         this._canvas.addEventListener('mousemove', this._mousemoveHandler);
-        this._canvas.addEventListener('mousedown', this._mousedownHandler);
-        this._canvas.addEventListener('mouseup', this._mouseupHandler);
+        setTimeout(() => {
+            this._canvas.addEventListener('mousedown', this._mousedownHandler);
+            this._canvas.addEventListener('mouseup', this._mouseupHandler);
+        }, 8500);
     }
 
     _tickHandler() {
