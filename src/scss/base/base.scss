@@ -7,3 +7,35 @@ body {
   color: black;
   font-family: sans-serif;
 }
+
+.btn__start {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+
+  transform: translate(-50%, -50%);
+
+  color: white;
+  background: none;
+  border: none;
+  outline: none;
+
+  font-size: 25px;
+
+  overflow: hidden;
+
+  & span {
+    transition: opacity .2s ease-in-out;
+    display: inline-block;
+    letter-spacing: -4px;
+    opacity: 0.7;
+    
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  &:hover {
+    cursor: pointer;
+  }
+}

@@ -126,7 +126,7 @@ class CircleInception {
 
     animateIn() {
         let tweenValue = { opacity: 0 }
-        TweenLite.to(tweenValue, .5, { opacity: 1, onUpdate: () => {
+        TweenLite.to(tweenValue, .4, { opacity: 1, onUpdate: () => {
             this._circleContainer.animate(tweenValue.opacity)
         }});
     }
