@@ -23,16 +23,16 @@ class CircleInception {
             y: this._props.y,
         }
 
-        let radiusArray = [100/3, 100/4, 100/5, 100/6, 100/7, 100/8];
-        let speedFactorArray = [2, 3, 4, 5, 6, 7];
+        let radius = 100 / (this._id + 3);
+        let speedFactor = this._id + 3;
 
         this._settings = {
             clearOpacity: 1,
-            radius: (this._width / 2) - 60,
+            radius: this._width < this._height ? this._width/2 * 0.9 : this._height/2 * 0.9,
             speed: 0.8,
             //102 interessant
-            rotationSpeedFactor: speedFactorArray[id],
-            radiusProportion: radiusArray[id],
+            rotationSpeedFactor: speedFactor,
+            radiusProportion: radius,
             dephasingFactor: 1
         }
         this._delta = 0;
@@ -50,38 +50,46 @@ class CircleInception {
 
     //SETUP
     _setupCircleContainer() {
-        this._circleContainer = new Circle({x: this._width/2, y: this._height/2}, this._settings.radius);
+        this._circleContainer = new Circle({x: this._width/2, y: this._height/2}, this._settings.radius, 0);
     }
 
     _setupRotatingCircle() {
         this._rotatingCircleRadius = this._settings.radius * (this._settings.radiusProportion/100) * this._settings.dephasingFactor;
+
         let center = {};
         center.x = this._width/2 + Math.cos(0) * (this._settings.radius - this._rotatingCircleRadius);
         center.y = this._height/2 + Math.sin(0) * (this._settings.radius - this._rotatingCircleRadius);
-        this._rotatingCircle = new Circle(center, this._rotatingCircleRadius);
+
+        this._rotatingCircle = new Circle(center, this._rotatingCircleRadius, 0);
     }
 
     _setupRotatingCircleCenter() {
         let radius = this._rotatingCircleRadius;
+
         let center = {};
         center.x = this._width/2 + Math.cos(0) * (this._settings.radius - radius);
         center.y = this._height/2 + Math.sin(0) * (this._settings.radius - radius);
+
         this._rotatingCircleCenter = new Point(center);
     }
 
     _setupRotatingCircleTangentPoint() {
         let radius = this._rotatingCircleRadius;
+
         let center = {};
         center.x = this._rotatingCircleCenter.position.x + Math.cos(-this._delta * this._settings.rotationSpeedFactor) * radius;
         center.y = this._rotatingCircleCenter.position.y + Math.sin(-this._delta * this._settings.rotationSpeedFactor) * radius;
+
         this._rotatingCircleTangentPoint = new Point(center);
     }
 
     _setupRotatingCircleTangentOpositePoint() {
         let radius = this._rotatingCircleRadius;
         let center = {};
+
         center.x = this._rotatingCircleCenter.position.x + Math.cos((-this._delta * this._settings.rotationSpeedFactor) + Math.PI * 2 ) * radius;
         center.y = this._rotatingCircleCenter.position.y + Math.sin((-this._delta * this._settings.rotationSpeedFactor) + Math.PI * 2 ) * radius;
+
         this._rotatingCircleTangentOpositePoint = new Point(center);
     }
 
@@ -92,6 +100,7 @@ class CircleInception {
 
     _updateRotatingCircle() {
         let radius = this._rotatingCircleRadius;
+
         this._rotatingCircle.position.x = this._width/2 + Math.cos(-this._delta) * (this._settings.radius - radius);
         this._rotatingCircle.position.y = this._height/2 + Math.sin(-this._delta) * (this._settings.radius - radius);
     }
@@ -110,15 +119,14 @@ class CircleInception {
 
     _updateRotatingCircleTangentOpositePoint() {
         let radius = this._rotatingCircleRadius;
-        this._rotatingCircleTangentOpositePoint.x = this._rotatingCircleCenter.position.x + Math.cos((-this._delta * this._settings.rotationSpeedFactor) + Math.PI * 2 ) * radius;
-        this._rotatingCircleTangentOpositePoint.y = this._rotatingCircleCenter.position.y + Math.sin((-this._delta * this._settings.rotationSpeedFactor) + Math.PI * 2 ) * radius;
+        this._rotatingCircleTangentOpositePoint.position.x = this._rotatingCircleCenter.position.x + Math.cos((this._delta * this._settings.rotationSpeedFactor) + Math.PI ) * radius;
+        this._rotatingCircleTangentOpositePoint.position.y = this._rotatingCircleCenter.position.y + Math.sin((this._delta * this._settings.rotationSpeedFactor) + Math.PI ) * radius;
     }
 
     //PUBLIC UPDATE
     updateSettings(props, value) {
         this._settings[props] = value;
         if (props == 'dephasingFactor') {
-            // this._clear(1);
             this._setupRotatingCircle();
         }
     }
@@ -126,7 +134,8 @@ class CircleInception {
     animateIn() {
         let tweenValue = { opacity: 0 }
         TweenLite.to(tweenValue, .4, { opacity: 1, onUpdate: () => {
-            this._circleContainer.animate(tweenValue.opacity)
+            this._circleContainer.animate(tweenValue.opacity);
+            this._rotatingCircle.animate(tweenValue.opacity);
         }});
     }
 
@@ -136,11 +145,11 @@ class CircleInception {
     }
 
     _drawRotatingCircle() {
-        this._rotatingCircle.draw(this._ctx);
+        this._rotatingCircle.draw(this._ctx, 'rgba(255, 255, 255, 0)');
     }
 
     _drawRotatingCircleCenter() {
-        this._rotatingCircleCenter.draw(this._ctx, 'white');
+        this._rotatingCircleCenter.draw(this._ctx, 'rgba(255, 255, 255, 0.2)');
     }
 
     _drawRotatingCircleTangentPoint() {
@@ -156,18 +165,25 @@ class CircleInception {
         this._ctx.fillRect(this._position.x, this._position.y, this._width, this._height);
     }
 
+    getPoints() {
+        return [
+            this._rotatingCircleTangentPoint.position,
+            this._rotatingCircleTangentOpositePoint.position,
+        ]
+    }
+
     draw(deltaTime) {
         this._delta += this._settings.speed * 0.001 * deltaTime;
 
-        this._clear(this._settings.clearOpacity);
+        // this._clear(this._settings.clearOpacity);
 
         this._ctx.save();
         this._ctx.translate(this._position.x, this._position.y);
 
         //DRAW
-        this._drawCircleContainer();
+        // this._drawCircleContainer();
         // this._drawRotatingCircle();
-        this._drawRotatingCircleCenter();
+        // this._drawRotatingCircleCenter();
         this._drawRotatingCircleTangentPoint();
         // this._drawRotatingCircleTangentOpositePoint();
 

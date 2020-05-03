@@ -1,7 +1,6 @@
 import _ from 'underscore';
-import { TweenLite, Quint } from 'gsap';
+import { TweenLite } from 'gsap';
 import * as dat from 'dat.gui';
-import SoundManager from './SoundManager';
 import Modulo from '../utils/Modulo';
 
 //components
@@ -9,56 +8,106 @@ import NoiseCircleComponent from './NoiseCircleComponent';
 import CircleInceptionComponent from './CircleInceptionComponent';
 
 class CanvasComponent {
-    constructor() {
+    constructor(options) {
         _.bindAll(
             this, 
             '_tickHandler',
             '_resizeHandler',
-            '_mousemoveHandler',
             '_settingsUpdateHandler',
             '_mousedownHandler',
             '_mouseupHandler'
         );
 
+        this.el = options.el;
+        this.modules = options.modules;
         this.components = {};
 
         this._settings = {
-            columns: 3,
-            rows: 2
+            columns: 4,
+            rows: 4
         }
 
         this._setup();
     }
 
     _setup() {
+        this._setupDeltaTime();
+        this._setupGUI();
+        
         this._setupCanvas();
         this._resize();
         this._setupGrid();
         this._setupComponents();
-        this._setupGUI();
-        this._setupDeltaTime();
+    }
+
+    _setupDeltaTime() {
+        this._dateNow = Date.now()
+        this._lastTime = this._dateNow;
+        this._deltaTime = 16;
+    }
+
+    _setupGUI() {
+        this._guiSettings = {
+            clearOpacity: 1,
+            globalClearOpacity: 1,
+            speed: 0.4,
+            rotationSpeedFactor: 50,
+            dephasingFactor: 1,
+        }
+
+        this._speedAnim = this._guiSettings.dephasingFactor;
+
+        const gui = new dat.GUI({ closed: true });
+
+        gui.add(this._guiSettings, 'clearOpacity', 0, 1)
+            .step(0.01)
+            .onChange(() => { this._settingsUpdateHandler('clearOpacity') });
+        gui.add(this._guiSettings, 'globalClearOpacity', 0, 1)
+            .step(0.01)
+
+
+        gui.add(this._guiSettings, 'speed', 0, 10)
+            .onChange(() => { this._settingsUpdateHandler('speed') })
+            .step(0.1);
+        gui.add(this._guiSettings, 'rotationSpeedFactor', 0, 500)
+            .step(0.1)
+            .onChange(() => { this._settingsUpdateHandler('rotationSpeedFactor') });
+        gui.add(this._guiSettings, 'dephasingFactor', 0, 2)
+            .step(0.00001)
+            .onChange(() => { this._settingsUpdateHandler('dephasingFactor') });
+    }
+
+    start() {
         setTimeout(() => {
+            this._introAnimation();
             this._start();
         }, 2000);
     }
 
-    _start() {
-        let interval = 250;
-        for (let i = 1; i <= 6; i++) {
+    _introAnimation() {
+        let interval = 200;
+
+        let index = 0;
+        for (let i in this.components) {
+            index++;
             setTimeout(() => {
-                this.components[`CircleInception${i}`].animateIn();
-            }, i * interval)
+                this.components[i].animateIn();
+            }, index * interval)
         }
+
         setTimeout(() => {
             TweenLite.to(this._guiSettings, 1, { clearOpacity: 0.02, onUpdate: () => {
                 this._settingsUpdateHandler('clearOpacity', this._guiSettings.clearOpacity);
             }});
         }, 8500);
+    }
+
+    _start() {
         this._setupEventListeners();
     }
 
     _setupCanvas() {
-        this._canvas = document.querySelector('.js-canvas');
+        this._canvas = this.el;
         this._ctx = this._canvas.getContext('2d');
     }
 
@@ -72,6 +121,7 @@ class CanvasComponent {
 
     _setupGrid() {
         this._boxes = [];
+
         for (let i = 0; i < this._settings.rows; i++) {
             for (let j = 0; j < this._settings.columns; j++) {
                 let box = {
@@ -83,48 +133,23 @@ class CanvasComponent {
                 this._boxes.push(box);
             }
         }
-    }
 
-    _setupDeltaTime() {
-        this._dateNow = Date.now()
-        this._lastTime = this._dateNow;
-        this._deltaTime = 16;
-    }
-
-    _setupGUI() {
-        this._guiSettings = {
-            clearOpacity: 1,
-            speed: 0.8,
-            rotationSpeedFactor: 50,
-            dephasingFactor: 1
+        this._centerBox = {
+            x: 0,
+            y: 0,
+            width: this._width,
+            height: this._height,
         }
-
-        this._speedAnim = this._guiSettings.dephasingFactor;
-
-        const gui = new dat.GUI({ closed: true });
-
-        gui.add(this._guiSettings, 'clearOpacity', [0.01, 1])
-            .onChange(() => { this._settingsUpdateHandler('clearOpacity') });
-        gui.add(this._guiSettings, 'speed', 0, 10)
-            .onChange(() => { this._settingsUpdateHandler('speed') })
-            .step(0.1);
-        gui.add(this._guiSettings, 'rotationSpeedFactor', 0, 500)
-            .step(0.1)
-            .onChange(() => { this._settingsUpdateHandler('rotationSpeedFactor') });
-        gui.add(this._guiSettings, 'dephasingFactor', 0, 2)
-            .step(0.00001)
-            .onChange(() => { this._settingsUpdateHandler('dephasingFactor') });
     }
 
     _setupComponents() {
-        // this.components.NoiseCircle = new NoiseCircleComponent(0, this._boxes[0], this._ctx);
-        this.SoundManager = new SoundManager();
-        this.components.CircleInception1 = new CircleInceptionComponent(0, this._boxes[0], this._ctx);
-        this.components.CircleInception2 = new CircleInceptionComponent(1, this._boxes[1], this._ctx);
-        this.components.CircleInception3 = new CircleInceptionComponent(2, this._boxes[2], this._ctx);
-        this.components.CircleInception4 = new CircleInceptionComponent(3, this._boxes[3], this._ctx);
-        this.components.CircleInception5 = new CircleInceptionComponent(4, this._boxes[4], this._ctx);
-        this.components.CircleInception6 = new CircleInceptionComponent(5, this._boxes[5], this._ctx);
+        const amount = this._boxes.length;
+        
+        for (let i = 0; i < amount; i++) {
+            // this.components[`NoiseCircle${i}`] = new NoiseCircleComponent(i, this._boxes[i], this._ctx);
+            // this.components[`CircleInception${i}`] = new CircleInceptionComponent(i, this._boxes[i], this._ctx);
+            this.components[`CircleInception${i}`] = new CircleInceptionComponent(i, this._centerBox, this._ctx);  
+        }
     }
 
     _updateDeltaTime() {
@@ -135,28 +160,80 @@ class CanvasComponent {
 
     _tick() {
         this._updateDeltaTime();
-        // this.components.NoiseCircle.draw();
-        this.components.CircleInception1.draw(this._deltaTime);
-        this.components.CircleInception2.draw(this._deltaTime);
-        this.components.CircleInception3.draw(this._deltaTime);
-        this.components.CircleInception4.draw(this._deltaTime);
-        this.components.CircleInception5.draw(this._deltaTime);
-        this.components.CircleInception6.draw(this._deltaTime);
+        this._ctx.fillStyle = `rgba(0, 0, 0, ${this._guiSettings.globalClearOpacity})`;
+        this._ctx.fillRect(0, 0, this._width, this._height);
 
+        //try
+        // this._drawLines();
+
+        for (let i in this.components) {
+            this.components[i].draw(this._deltaTime);
+        }
+
+        this._updateSpeed();
+    }
+
+    _drawLines() {
+        let tangentPoints = [];
+        let tangentOpositePoints = [];
+
+        for (let i in this.components) {
+            const circlePoints = this.components[i].getPoints();
+            const tangentPoint = circlePoints[0];
+            const tangentOpositePoint = circlePoints[1];
+
+            tangentPoints.push(tangentPoint);
+            tangentOpositePoints.push(tangentOpositePoint);
+        }
+
+        //tangent points
+        this._ctx.strokeStyle = 'white';
+
+        this._ctx.beginPath();
+
+        this._ctx.moveTo(tangentPoints[0].x, tangentPoints[0].y);
+
+        for (let i = 0; i < tangentPoints.length; i++) {
+            const position = tangentPoints[i];
+            this._ctx.lineTo(position.x, position.y);
+        }
+        
+        this._ctx.stroke();
+        this._ctx.closePath();
+
+        //tangent oposite points
+        this._ctx.strokeStyle = 'white';
+
+        this._ctx.beginPath();
+
+        this._ctx.moveTo(tangentOpositePoints[0].x, tangentOpositePoints[0].y);
+
+        for (let i = 0; i < tangentOpositePoints.length; i++) {
+            const position = tangentOpositePoints[i];
+            this._ctx.lineTo(position.x, position.y);
+        }
+        
+        this._ctx.stroke();
+        this._ctx.closePath();
+
+    }
+
+    _updateSpeed() {
         if(!this._speedAnimationStarted) return;
+
         this._speedAnim += 0.01;
         this._guiSettings.dephasingFactor = Modulo(this._speedAnim, 2);
         this._settingsUpdateHandler('dephasingFactor', this._guiSettings.dephasingFactor);
-
     }
 
     _setupEventListeners() {
         TweenLite.ticker.addEventListener('tick', this._tickHandler);
+
         window.addEventListener('resize', this._resizeHandler);
-        this._canvas.addEventListener('mousemove', this._mousemoveHandler);
+
         setTimeout(() => {
-            this._canvas.addEventListener('mousedown', this._mousedownHandler);
-            this._canvas.addEventListener('mouseup', this._mouseupHandler);
+            this.el.addEventListener('mousedown', this._mousedownHandler);
+            this.el.addEventListener('mouseup', this._mouseupHandler);
         }, 8500);
     }
 
@@ -167,48 +244,32 @@ class CanvasComponent {
     _resizeHandler() {
         this._resize();
         this._setupGrid();
-        this._setupComponents();
-    }
-
-    _mousemoveHandler(e) {
-        let mouse = {};
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-
-        for (let i = 0; i < this._boxes.length; i++) {
-            if (mouse.x >= this._boxes[i].x && mouse.x < this._boxes[i].x + this._boxes[i].width
-                 &&
-                mouse.y >= this._boxes[i].y && mouse.y < this._boxes[i].y + this._boxes[i].height)
-            {
-                this._activeBox = this._boxes[i];
-            }
-        }
     }
 
     _settingsUpdateHandler(props) {
-        this.components.CircleInception1.updateSettings(props, this._guiSettings[props]);
-        this.components.CircleInception2.updateSettings(props, this._guiSettings[props]);
-        this.components.CircleInception3.updateSettings(props, this._guiSettings[props]);
-        this.components.CircleInception4.updateSettings(props, this._guiSettings[props]);
-        this.components.CircleInception5.updateSettings(props, this._guiSettings[props]);
-        this.components.CircleInception6.updateSettings(props, this._guiSettings[props]);
+        for (let i in this.components) {
+            this.components[i].updateSettings(props, this._guiSettings[props]);
+        }
     }
 
     _mousedownHandler() {
         this._speedAnimationStarted = true;
+
         TweenLite.to(this._guiSettings, 2, { speed: 0.8 * 0.2, onUpdate: () => {
             this._settingsUpdateHandler('speed', this._guiSettings.speed);
-        }
-    });
-    this.SoundManager.slowDown();
-}
+        } });
 
-_mouseupHandler() {
-    this._speedAnimationStarted = false;
-    TweenLite.to(this._guiSettings, 2, { speed: 0.8 * 1, onUpdate: () => {
-        this._settingsUpdateHandler('speed', this._guiSettings.speed)
-    }});
-    this.SoundManager.resetSpeed();
+        this.modules.soundManager.slowDown();
+    }
+
+    _mouseupHandler() {
+        this._speedAnimationStarted = false;
+
+        TweenLite.to(this._guiSettings, 2, { speed: 0.8 * 1, onUpdate: () => {
+            this._settingsUpdateHandler('speed', this._guiSettings.speed)
+        }});
+
+        this.modules.soundManager.resetSpeed();
     }
 }
 

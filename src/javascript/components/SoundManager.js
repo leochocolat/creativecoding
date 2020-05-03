@@ -5,30 +5,45 @@ class SoundManager {
 
     constructor() {
         _.bindAll(this, '_onAudioReadyHandler');
+
         this._tweenObject = {
             playBackRate: 1
         }
+
         this._last = 0;
+
         this._setup();
     }
 
     _setup() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this._audioContext = new AudioContext();
-        let request = new XMLHttpRequest();
         
-        //48bpm
-        request.open("GET", "https://leochocolat.github.io/creativecoding/dist/sounds/shanghai.mp3", true);
-        request.responseType = "arraybuffer";
-        request.onload = () => {
-            this._audioContext.decodeAudioData(request.response, this._onAudioReadyHandler);
-        }
-        request.send();
     }
 
-    play(buffer) {
+    loadAudio() {
+        let request = new XMLHttpRequest();
+        
+        let promise = new Promise(resolve => {
+            //48bpm
+            request.open("GET", "./sounds/shanghai.mp3", true);
+            request.responseType = "arraybuffer";
+            request.onload = () => {
+                this._audioContext.decodeAudioData(request.response, resolve);
+            }
+            request.send();
+        });
+
+        promise.then(result => {
+            this._buffer = result;
+        });
+
+        return promise;
+    }
+
+    play() {
         this._bufferSource = this._audioContext.createBufferSource();
-        this._bufferSource.buffer = buffer;
+        this._bufferSource.buffer = this._buffer;
         this._bufferSource.loop = true;
         this._bufferSource.connect(this._audioContext.destination);
         this._bufferSource.start();

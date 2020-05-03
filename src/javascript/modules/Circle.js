@@ -1,25 +1,20 @@
 class Circle {
-    constructor(position, radius, direction, velocity) {
+    constructor(position, radius, alpha) {
         this.position = position;
         this.radius = radius;
-        this.direction = direction;
-        this.velocity = velocity;
-
-        this._alpha = 0;
+        this.alpha = alpha;
     }
 
     animate(value) {
-        this._alpha = value;
+        this.alpha = value;
     }
 
     draw(ctx, color) {
-        if (color) {
-            ctx.strokeStyle = color;
-        } else {
-            ctx.strokeStyle = 'white';
-        }
+        ctx.strokeStyle = color || 'white';
+        ctx.fillStyle = 'transparent';
+
         ctx.save();
-        ctx.globalAlpha = this._alpha;
+        ctx.globalAlpha = this.alpha;
         ctx.translate(this.position.x, this.position.y);
         ctx.beginPath();
         ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
